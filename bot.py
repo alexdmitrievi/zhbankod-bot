@@ -28,7 +28,10 @@ logging.basicConfig(level=logging.INFO)
 (ASK_NAME, ASK_PROJECT, ASK_BUDGET) = range(3)
 
 # Настройка Google Sheets
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 creds_dict = json.loads(creds_json)
 creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 gs_client = gspread.authorize(creds)
