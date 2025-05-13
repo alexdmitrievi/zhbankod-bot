@@ -17,7 +17,11 @@ logging.basicConfig(level=logging.INFO)
 
 # Google Sheets Setup
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = Credentials.from_service_account_file("zhbankod_gsheets_credentials.json", scopes=SCOPES)
+import os
+import json
+creds_dict = json.loads(os.environ["GCP_CREDENTIALS_JSON"])
+creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+
 gs_client = gspread.authorize(creds)
 sheet = gs_client.open("ЖБАНКОД Заявки").sheet1
 
@@ -39,26 +43,18 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "services":
         await query.edit_message_text(
-            "🧠 *Услуги ЖБАНКОД:*
-
-"
-            "• Анкетные боты с Google Sheets
-"
-            "• Боты с оплатой и интеграциями
-"
-            "• Воронки + постинг в канал
-",
+            "🧠 *Услуги ЖБАНКОД:*\n\n"
+            "• Анкетные боты с Google Sheets\n"
+            "• Боты с оплатой и интеграциями\n"
+            "• Воронки + постинг в канал\n"
+            "• И множество других решений под ваши задачи — от логистики до AI-ботов 🤖",
             parse_mode="Markdown"
         )
     elif data == "portfolio":
         await query.edit_message_text(
-            "📂 *Примеры проектов:*
-
-"
-            "• @Parser_newbot — бот для логистики с документами
-"
-            "• @Capitalpay_newbot — HighRisk анкета с автоворонкой
-",
+            "📂 *Примеры проектов:*\n\n"
+            "• @Parser_newbot — бот для логистики с документами\n"
+            "• @Capitalpay_newbot — HighRisk анкета с автоворонкой",
             parse_mode="Markdown"
         )
     elif data == "form":
@@ -98,20 +94,13 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Отправка админу
     text = (
-        f"📥 *Новая заявка!*
-
-"
-        f"👤 Имя: {data['name']}
-"
-        f"🧠 Проект: {data['project']}
-"
-        f"💸 Бюджет: {data['budget']}
-"
-        f"🔗 Telegram: {tg_link}
-"
+        f"📥 *Новая заявка!*\n\n"
+        f"👤 Имя: {data['name']}\n"
+        f"🧠 Проект: {data['project']}\n"
+        f"💸 Бюджет: {data['budget']}\n"
+        f"🔗 Telegram: {tg_link}\n"
         f"📅 Дата: {date}"
     )
-
     await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
     await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.")
     return ConversationHandler.END
