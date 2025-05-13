@@ -105,7 +105,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📊 Укажем цену, сроки и покажем демо по вашему запросу."
         )
     elif data == "cancel":
-        await start(update, context)
+        await start(query, context)  # ← fix: используем query вместо update.message
     else:
         await query.edit_message_text("❓ Неизвестная команда.")
 
