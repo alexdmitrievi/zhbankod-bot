@@ -82,6 +82,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "👇 Нажмите «Оставить заявку» и расскажите, что нужно именно вам.",
             parse_mode="HTML"
         )
+
     elif data == "portfolio":
         await query.edit_message_text(
             "📂 <b>Наши кейсы:</b>\n\n"
@@ -90,6 +91,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Мы не просто показываем кнопки. Мы запускаем работающие решения.",
             parse_mode="HTML"
         )
+
     elif data == "form":
         await query.edit_message_text(
             "📬 Введите ваше <b>имя</b> и Telegram (или ник):",
@@ -99,13 +101,19 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         )
         return ASK_NAME
+
     elif data == "order":
         await query.edit_message_text(
             "💰 Хотите расчёт? Просто нажмите «Оставить заявку» — и мы уточним детали.\n\n"
-            "📊 Укажем цену, сроки и покажем демо по вашему запросу."
+            "📊 Укажем цену, сроки и покажем демо по вашему запросу.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")]
+            ])
         )
+
     elif data == "cancel":
-        await start(query, context)  # ← fix: используем query вместо update.message
+        await start(update, context)  # ← корректно передаём update в start
+
     else:
         await query.edit_message_text("❓ Неизвестная команда.")
 
