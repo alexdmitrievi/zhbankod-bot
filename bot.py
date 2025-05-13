@@ -120,24 +120,43 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Анкета с кнопками меню
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.callback_query and update.callback_query.data == "cancel":
+        await update.callback_query.answer()
+        await start(update.callback_query, context)
+        return ConversationHandler.END
+
     context.user_data["name"] = update.message.text
-    await update.message.reply_text("✍️ Расскажите, *какой бот вам нужен*:",
-                                    parse_mode="Markdown",
-                                    reply_markup=InlineKeyboardMarkup([
-                                        [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-                                    ]))
+    await update.message.reply_text(
+        "✍️ Расскажите, *какой бот вам нужен*:",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+        ])
+    )
     return ASK_PROJECT
 
 async def ask_project(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.callback_query and update.callback_query.data == "cancel":
+        await update.callback_query.answer()
+        await start(update.callback_query, context)
+        return ConversationHandler.END
+
     context.user_data["project"] = update.message.text
-    await update.message.reply_text("💸 Укажите *желаемый бюджет* проекта:",
-                                    parse_mode="Markdown",
-                                    reply_markup=InlineKeyboardMarkup([
-                                        [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-                                    ]))
+    await update.message.reply_text(
+        "💸 Укажите *желаемый бюджет* проекта:",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+        ])
+    )
     return ASK_BUDGET
 
 async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.callback_query and update.callback_query.data == "cancel":
+        await update.callback_query.answer()
+        await start(update.callback_query, context)
+        return ConversationHandler.END
+
     context.user_data["budget"] = update.message.text
     user = update.message.from_user
     data = context.user_data
