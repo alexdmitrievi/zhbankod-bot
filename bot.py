@@ -41,17 +41,17 @@ sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 # Установка команды меню
 async def set_menu(bot):
     await bot.set_my_commands([
-        BotCommand("start", "\ud83d\ude80 Запустить бота — покажем магию")
+        BotCommand("start", "🚀 Запустить бота — покажем магию")
     ])
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("\ud83e\udde0 Услуги", callback_data="services")],
-        [InlineKeyboardButton("\ud83d\udcc2 Примеры работ", callback_data="portfolio")],
-        [InlineKeyboardButton("\ud83d\udcec Оставить заявку", callback_data="form")],
-        [InlineKeyboardButton("\ud83d\udcb0 Заказать и оплатить", callback_data="order")],
-        [InlineKeyboardButton("\ud83d\udcde Связаться", url="https://t.me/zhbankov_alex")]
+        [InlineKeyboardButton("🧠 Услуги", callback_data="services")],
+        [InlineKeyboardButton("📂 Примеры работ", callback_data="portfolio")],
+        [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")],
+        [InlineKeyboardButton("💰 Заказать и оплатить", callback_data="order")],
+        [InlineKeyboardButton("📞 Связаться", url="https://t.me/zhbankov_alex")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
@@ -68,51 +68,51 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "services":
         await query.edit_message_text(
-            "\ud83e\udde0 *Что мы делаем в ЖБАНКОД:*\n\n"
+            "🧠 *Что мы делаем в ЖБАНКОД:*\n\n"
             "• Боты-анкеты с Google Sheets — заявки прямо в таблицу\n"
             "• Боты с онлайн-оплатой, CRM и аналитикой\n"
             "• Воронки + автопостинг в каналы\n"
             "• Логистика, тендеры, AI — делаем под ключ, под задачу\n\n"
-            "\u26a1\ufe0f Всё под ключ. Без шаблонов. Только работающие решения.",
+            "⚡️ Всё под ключ. Без шаблонов. Только работающие решения.",
             parse_mode="Markdown"
         )
     elif data == "portfolio":
         await query.edit_message_text(
-            "\ud83d\udcc2 *Примеры проектов:*\n\n"
+            "📂 *Примеры проектов:*\n\n"
             "• @Parser_newbot — бот для логистики с документами\n"
             "• @Capitalpay_newbot — HighRisk анкета с автоворонкой",
             parse_mode="Markdown"
         )
     elif data == "form":
-        await query.edit_message_text("\ud83d\udce8 Введите ваше *имя* и Telegram (или ник):",
+        await query.edit_message_text("📬 Введите ваше *имя* и Telegram (или ник):",
                                       parse_mode="Markdown",
                                       reply_markup=InlineKeyboardMarkup([
-                                          [InlineKeyboardButton("\ud83c\udfe0 Вернуться в меню", callback_data="cancel")]
+                                          [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
                                       ]))
         return ASK_NAME
     elif data == "order":
-        await query.edit_message_text("\ud83d\udcb0 Чтобы получить расчёт, просто нажмите 'Оставить заявку'.")
+        await query.edit_message_text("💰 Чтобы получить расчёт, просто нажмите 'Оставить заявку'.")
     elif data == "cancel":
         await start(update, context)
     else:
-        await query.edit_message_text("\u2753 Неизвестная команда.")
+        await query.edit_message_text("❓ Неизвестная команда.")
 
 # Анкета с кнопками меню
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["name"] = update.message.text
-    await update.message.reply_text("\u270d\ufe0f Расскажите, *какой бот вам нужен*:",
+    await update.message.reply_text("✍️ Расскажите, *какой бот вам нужен*:",
                                     parse_mode="Markdown",
                                     reply_markup=InlineKeyboardMarkup([
-                                        [InlineKeyboardButton("\ud83c\udfe0 Вернуться в меню", callback_data="cancel")]
+                                        [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
                                     ]))
     return ASK_PROJECT
 
 async def ask_project(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["project"] = update.message.text
-    await update.message.reply_text("\ud83d\udcb8 Укажите *желаемый бюджет* проекта:",
+    await update.message.reply_text("💸 Укажите *желаемый бюджет* проекта:",
                                     parse_mode="Markdown",
                                     reply_markup=InlineKeyboardMarkup([
-                                        [InlineKeyboardButton("\ud83c\udfe0 Вернуться в меню", callback_data="cancel")]
+                                        [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
                                     ]))
     return ASK_BUDGET
 
@@ -133,24 +133,24 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     except Exception as e:
         logging.error(f"Ошибка при записи в Google Sheets: {e}")
-        await update.message.reply_text("\u26a0\ufe0f Ошибка при сохранении заявки. Попробуйте позже.")
+        await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.")
         return ConversationHandler.END
 
     text = (
-        f"\ud83d\udce5 *Новая заявка!*\n\n"
-        f"\ud83d\udc64 Имя: {data['name']}\n"
-        f"\ud83e\udde0 Проект: {data['project']}\n"
-        f"\ud83d\udcb8 Бюджет: {data['budget']}\n"
-        f"\ud83d\udd17 Telegram: {tg_link}\n"
-        f"\ud83d\uddd3\ufe0f Дата: {date}"
+        f"📥 *Новая заявка!*\n\n"
+        f"👤 Имя: {data['name']}\n"
+        f"🧠 Проект: {data['project']}\n"
+        f"💸 Бюджет: {data['budget']}\n"
+        f"🔗 Telegram: {tg_link}\n"
+        f"🗓️ Дата: {date}"
     )
     await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
-    await update.message.reply_text("\u2705 Спасибо! Мы свяжемся с вами в Telegram.")
+    await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.")
     return ConversationHandler.END
 
 # Отмена анкеты
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("\u274c Заявка отменена.")
+    await update.message.reply_text("❌ Заявка отменена.")
     return ConversationHandler.END
 
 # Главная функция
@@ -175,9 +175,10 @@ def main():
     )
     app.add_handler(conv_handler)
 
-    logging.info("Бот запущен \ud83d\ude80")
+    logging.info("Бот запущен 🚀")
     app.run_polling()
 
 if __name__ == "__main__":
     main()
+
 
