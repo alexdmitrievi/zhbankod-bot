@@ -8,7 +8,7 @@ import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 
-TOKEN = "YOUR_TOKEN_HERE"
+TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_ID = 407721399
 
 logging.basicConfig(level=logging.INFO)
