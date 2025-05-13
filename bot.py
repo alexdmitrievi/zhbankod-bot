@@ -106,13 +106,14 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(
             "💰 Хотите расчёт? Просто нажмите «Оставить заявку» — и мы уточним детали.\n\n"
             "📊 Укажем цену, сроки и покажем демо по вашему запросу.",
+            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")]
             ])
         )
 
     elif data == "cancel":
-        await start(update, context)  # ← корректно передаём update в start
+        await start(update, context)
 
     else:
         await query.edit_message_text("❓ Неизвестная команда.")
