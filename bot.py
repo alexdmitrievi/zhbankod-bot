@@ -195,9 +195,10 @@ def main():
         fallbacks=[
             CallbackQueryHandler(callback_handler, pattern="^cancel$"),
             CommandHandler("cancel", cancel),
-            CommandHandler("help", help_command)  # ← теперь работает в анкете
+            CommandHandler("help", help_command)
         ],
-        allow_reentry=True
+        allow_reentry=True,
+        per_message=True  # 👈 Обязательно
     )
     app.add_handler(conv_handler)
 
