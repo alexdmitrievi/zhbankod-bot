@@ -41,7 +41,8 @@ sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 # Установка команды меню
 async def set_menu(bot):
     await bot.set_my_commands([
-        BotCommand("start", "🚀 Запустить бота — покажем магию")
+        BotCommand("start", "🚀 Запустить бота — покажем магию"),
+        BotCommand("menu", "🏠 Вернуться в основное меню")
     ])
 
 # Команда /start
@@ -174,6 +175,7 @@ def main():
         allow_reentry=True
     )
     app.add_handler(conv_handler)
+    app.add_handler(CommandHandler("menu", start))
 
     logging.info("Бот запущен 🚀")
     app.run_polling()
