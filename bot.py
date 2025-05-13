@@ -153,8 +153,6 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # /help команда
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
-    if context.conversation_data:
-        context.conversation_data.clear()
 
     await update.message.reply_text(
         "❓ *Как пользоваться ботом ЖБАНКОД:*\n\n"
