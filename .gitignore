@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+zhbankod_gsheets_credentials.json
+.env
