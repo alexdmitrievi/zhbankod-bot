@@ -38,7 +38,7 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 gs_client = gspread.authorize(creds)
 sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 
-# Установка кастомного меню
+# Установка команды меню
 async def set_menu(bot):
     await bot.set_my_commands([
         BotCommand("start", "🚀 Запустить бота — покажем магию")
@@ -59,7 +59,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-# Обработка кнопок меню
+# Обработка кнопок
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
@@ -75,7 +75,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚡ Всё под ключ. Без шаблонов. Только работающие решения.",
             parse_mode="Markdown"
         )
-
     elif data == "portfolio":
         await query.edit_message_text(
             "📂 *Примеры проектов:*\n\n"
@@ -83,20 +82,15 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "• @Capitalpay_newbot — HighRisk анкета с автоворонкой",
             parse_mode="Markdown"
         )
-
     elif data == "form":
         await query.edit_message_text("📬 Введите ваше имя и Telegram (или ник):")
         return ASK_NAME
-
     elif data == "order":
-        await query.edit_message_text(
-            "💰 Чтобы получить расчёт, просто нажмите 'Оставить заявку'."
-        )
-
+        await query.edit_message_text("💰 Чтобы получить расчёт, просто нажмите 'Оставить заявку'.")
     else:
         await query.edit_message_text("❓ Неизвестная команда.")
 
-# Шаги анкеты
+# Анкета
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["name"] = update.message.text
     await update.message.reply_text("📝 Опишите, какой бот вам нужен:")
@@ -111,7 +105,6 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["budget"] = update.message.text
     user = update.message.from_user
     data = context.user_data
-
     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
 
@@ -145,12 +138,15 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.")
     return ConversationHandler.END
 
-# Запуск бота
-async def main():
+# Главная функция
+def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
-    await set_menu(app.bot)
+    # Устанавливаем меню команд
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(set_menu(app.bot))
 
+    # Хендлеры
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(callback_handler))
 
@@ -167,9 +163,9 @@ async def main():
     app.add_handler(conv_handler)
 
     logging.info("Бот запущен 🚀")
-    await app.run_polling()
+    app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
 
 
