@@ -1,30 +1,40 @@
+import os
+import json
+import logging
+import datetime
+import gspread
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, ContextTypes,
     MessageHandler, filters, CallbackQueryHandler, ConversationHandler
 )
-import logging
-import datetime
-import gspread
 from google.oauth2.service_account import Credentials
 
-TOKEN = os.environ["BOT_TOKEN"]
+# Переменные окружения
+TOKEN = os.environ.get("BOT_TOKEN")
+if not TOKEN:
+    raise ValueError("BOT_TOKEN is not set in environment variables")
+
+creds_json = os.environ.get("GCP_CREDENTIALS_JSON")
+if not creds_json:
+    raise ValueError("GCP_CREDENTIALS_JSON is not set in environment variables")
+
 ADMIN_ID = 407721399
 
+# Логирование
 logging.basicConfig(level=logging.INFO)
 
+# Состояния анкеты
 (ASK_NAME, ASK_PROJECT, ASK_BUDGET) = range(3)
 
-# Google Sheets Setup
+# Настройка Google Sheets
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-import os
-import json
-creds_dict = json.loads(os.environ["GCP_CREDENTIALS_JSON"])
+creds_dict = json.loads(creds_json)
 creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-
 gs_client = gspread.authorize(creds)
-sheet = gs_client.open("ЖБАНКОД Заявки").sheet1
+sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 
+# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🧠 Услуги", callback_data="services")],
@@ -34,8 +44,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📞 Связаться", url="https://t.me/zhbankov_alex")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Добро пожаловать в ЖБАНКОД — разработка Telegram-ботов под ключ!", reply_markup=reply_markup)
+    await update.message.reply_text(
+        "Добро пожаловать в ЖБАНКОД — разработка Telegram-ботов под ключ!",
+        reply_markup=reply_markup
+    )
 
+# Обработка кнопок меню
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
@@ -65,6 +79,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.edit_message_text("❓ Неизвестная команда.")
 
+# Шаги анкеты
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["name"] = update.message.text
     await update.message.reply_text("📝 Опишите, какой бот вам нужен:")
@@ -84,13 +99,18 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
 
     # Запись в Google Sheets
-    sheet.append_row([
-        data['name'],
-        data['project'],
-        data['budget'],
-        tg_link,
-        date
-    ])
+    try:
+        sheet.append_row([
+            data['name'],
+            data['project'],
+            data['budget'],
+            tg_link,
+            date
+        ])
+    except Exception as e:
+        logging.error(f"Ошибка при записи в Google Sheets: {e}")
+        await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.")
+        return ConversationHandler.END
 
     # Отправка админу
     text = (
@@ -105,10 +125,12 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.")
     return ConversationHandler.END
 
+# Отмена анкеты
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.")
     return ConversationHandler.END
 
+# Запуск бота
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
@@ -123,6 +145,7 @@ def main():
             ASK_BUDGET: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_budget)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
+        allow_reentry=True
     )
     app.add_handler(conv_handler)
 
