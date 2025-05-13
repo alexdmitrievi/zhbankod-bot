@@ -3,7 +3,8 @@ import json
 import logging
 import datetime
 import gspread
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+import asyncio
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, ContextTypes,
     MessageHandler, filters, CallbackQueryHandler, ConversationHandler
@@ -37,6 +38,12 @@ creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
 gs_client = gspread.authorize(creds)
 sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 
+# Установка кастомного меню
+async def set_menu(bot):
+    await bot.set_my_commands([
+        BotCommand("start", "🚀 Запустить бота — покажем магию")
+    ])
+
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -58,7 +65,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
     await query.answer()
 
-    # Услуги
     if data == "services":
         await query.edit_message_text(
             "🧠 *Что мы делаем в ЖБАНКОД:*\n\n"
@@ -70,7 +76,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
-    # Портфолио
     elif data == "portfolio":
         await query.edit_message_text(
             "📂 *Примеры проектов:*\n\n"
@@ -79,18 +84,15 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
-    # Анкета
     elif data == "form":
         await query.edit_message_text("📬 Введите ваше имя и Telegram (или ник):")
         return ASK_NAME
 
-    # Заказ
     elif data == "order":
         await query.edit_message_text(
             "💰 Чтобы получить расчёт, просто нажмите 'Оставить заявку'."
         )
 
-    # Неизвестная команда
     else:
         await query.edit_message_text("❓ Неизвестная команда.")
 
@@ -113,7 +115,6 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
 
-    # Запись в Google Sheets
     try:
         sheet.append_row([
             data['name'],
@@ -127,7 +128,6 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.")
         return ConversationHandler.END
 
-    # Отправка админу
     text = (
         f"📥 *Новая заявка!*\n\n"
         f"👤 Имя: {data['name']}\n"
@@ -146,8 +146,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # Запуск бота
-def main():
+async def main():
     app = ApplicationBuilder().token(TOKEN).build()
+
+    await set_menu(app.bot)
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(callback_handler))
@@ -164,7 +166,10 @@ def main():
     )
     app.add_handler(conv_handler)
 
-    app.run_polling()
+    logging.info("Бот запущен 🚀")
+    await app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
+
+
