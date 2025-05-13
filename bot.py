@@ -42,7 +42,8 @@ sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 async def set_menu(bot):
     await bot.set_my_commands([
         BotCommand("start", "🚀 Запустить бота — покажем магию"),
-        BotCommand("menu", "🏠 Вернуться в основное меню")
+        BotCommand("menu", "🏠 Вернуться в основное меню"),
+        BotCommand("help", "❓ Что умеет бот и как им пользоваться")
     ])
 
 # Команда /start
@@ -149,6 +150,19 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.")
     return ConversationHandler.END
 
+# /help команда
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "❓ *Как пользоваться ботом ЖБАНКОД:*\n\n"
+        "🚀 Нажмите `/start` или `/menu`, чтобы открыть главное меню.\n\n"
+        "📬 В разделе *«Оставить заявку»* вы можете отправить нам запрос на разработку:\n"
+        "• Напишите ваше имя и Telegram\n"
+        "• Опишите идею бота\n"
+        "• Укажите бюджет\n\n"
+        "📞 Если хотите задать вопрос напрямую — просто напишите @zhbankov_alex",
+        parse_mode="Markdown"
+    )
+
 # Отмена анкеты
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.")
@@ -161,6 +175,8 @@ def main():
     loop.run_until_complete(set_menu(app.bot))
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("menu", start))
+    app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CallbackQueryHandler(callback_handler))
 
     conv_handler = ConversationHandler(
@@ -175,7 +191,6 @@ def main():
         allow_reentry=True
     )
     app.add_handler(conv_handler)
-    app.add_handler(CommandHandler("menu", start))
 
     logging.info("Бот запущен 🚀")
     app.run_polling()
