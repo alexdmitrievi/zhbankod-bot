@@ -42,12 +42,19 @@ gs_client = gspread.authorize(creds)
 sheet = gs_client.open("ЖБАНКОД Заявки").worksheet("Лист1")
 
 # Установка команды меню
+# Установка команд меню
 async def set_menu(bot):
-    await bot.set_my_commands([
+    commands = [
         BotCommand("start", "🚀 Запустить бота — покажем магию"),
         BotCommand("menu", "🏠 Вернуться в основное меню"),
         BotCommand("help", "❓ Что умеет бот и как им пользоваться")
-    ])
+    ]
+
+    # Добавим команду publish только для админа
+    if ADMIN_ID:
+        commands.append(BotCommand("publish", "📢 Опубликовать пост в канал (для админа)"))
+
+    await bot.set_my_commands(commands)
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
