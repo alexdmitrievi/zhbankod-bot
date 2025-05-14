@@ -216,13 +216,14 @@ def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(set_menu(app.bot))
 
-    # Глобальные команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CallbackQueryHandler(callback_handler))
 
-    # Анкетный сценарий с fallback для /help
+    # Отдельно обрабатываем выход в меню
+    app.add_handler(CallbackQueryHandler(start, pattern="^cancel$"))
+
     conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(callback_handler, pattern="^form$")],
         states={
@@ -231,12 +232,11 @@ def main():
             ASK_BUDGET: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_budget)],
         },
         fallbacks=[
-            CallbackQueryHandler(callback_handler, pattern="^cancel$"),
             CommandHandler("cancel", cancel),
             CommandHandler("help", help_command)
         ],
         allow_reentry=True,
-        per_message=True  # 👈 Обязательно
+        per_message=True
     )
     app.add_handler(conv_handler)
 
