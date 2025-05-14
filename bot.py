@@ -221,15 +221,22 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CallbackQueryHandler(callback_handler))
 
-    # Отдельно обрабатываем выход в меню
-    app.add_handler(CallbackQueryHandler(start, pattern="^cancel$"))
-
+    # ConversationHandler обязательно должен быть внутри main
     conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(callback_handler, pattern="^form$")],
         states={
-            ASK_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name)],
-            ASK_PROJECT: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_project)],
-            ASK_BUDGET: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_budget)],
+            ASK_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name),
+                CallbackQueryHandler(callback_handler, pattern="^cancel$"),
+            ],
+            ASK_PROJECT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_project),
+                CallbackQueryHandler(callback_handler, pattern="^cancel$"),
+            ],
+            ASK_BUDGET: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_budget),
+                CallbackQueryHandler(callback_handler, pattern="^cancel$"),
+            ],
         },
         fallbacks=[
             CommandHandler("cancel", cancel),
