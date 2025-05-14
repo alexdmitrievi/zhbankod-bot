@@ -216,12 +216,15 @@ def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(set_menu(app.bot))
 
+    # Команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", start))
     app.add_handler(CommandHandler("help", help_command))
+
+    # Обработка inline-кнопок
     app.add_handler(CallbackQueryHandler(callback_handler))
 
-    # ConversationHandler обязательно должен быть внутри main
+    # Анкетный сценарий
     conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(callback_handler, pattern="^form$")],
         states={
