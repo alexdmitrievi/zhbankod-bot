@@ -242,12 +242,13 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
         "☕ Пока вы пьёте чай — ЖБАНКОД уже работает.\n\n"
         "📝 <b>Хотите бота под свой бизнес?</b>\n"
         "📎 <a href='https://docs.google.com/spreadsheets/d/1eI1SkiA37tWKz9S5HCBl1XV8flODGOBL/edit?usp=sharing'>Скачать короткий бриф (2–3 минуты)</a>\n\n"
-        f"👇 Или нажмите кнопку, чтобы оставить заявку:\n{BOT_USERNAME}"
+        f"👇 Или нажмите кнопку, чтобы оставить заявку:\n{BOT_USERNAME}\n\n"
+        "💬 Есть вопросы или хотите обсудить? Пишите в наш чат:\n"
+        "<a href='https://t.me/+bAejsng5mFRmMWZi'>ЖБАНКОД | Обсуждение</a>"
     )
 
     reply_markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📬 Оставить заявку", url=f"https://t.me/{BOT_USERNAME.replace('@', '')}")],
-        [InlineKeyboardButton("💬 Обсудить в чате", url="https://t.me/+bAejsng5mFRmMWZi")]
+        [InlineKeyboardButton("📬 Оставить заявку", url=f"https://t.me/{BOT_USERNAME.replace('@', '')}")]
     ])
 
     message = await context.bot.send_message(
@@ -263,7 +264,6 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
         message_id=message.message_id
     )
 
-    # Ответ пользователю после публикации
     if update.message:
         await update.message.reply_text("✅ Пост опубликован и закреплён в канале.")
     elif update.callback_query:
