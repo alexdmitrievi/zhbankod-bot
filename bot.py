@@ -56,13 +56,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📞 Связаться", url="https://t.me/zhbankov_alex")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "👋 Привет! Мы — <b>ЖБАНКОД</b>, делаем Telegram-ботов, которые приносят заявки, деньги и автоматизацию.\n\n"
-        "⚙️ Хотите анкету, CRM, приём оплаты или кастомное решение под ваш бизнес?\n"
-        "👇 Просто выберите, что вас интересует — и мы всё покажем:",
-        parse_mode="HTML",
-        reply_markup=reply_markup
+
+    message_text = (
+        "👋 Привет! Мы — <b>ЖБАНКОД</b>, создаём Telegram-ботов, которые приносят заявки, деньги и автоматизируют ваш бизнес.\n\n"
+        "⚙️ Хотите анкету, CRM, приём оплаты или кастомное решение под ваши задачи?\n"
+        "👇 Просто выберите, что вас интересует — и мы покажем, как это работает:"
     )
+
+    if update.message:
+        await update.message.reply_text(message_text, reply_markup=reply_markup, parse_mode="HTML")
+    elif update.callback_query:
+        await update.callback_query.edit_message_text(message_text, reply_markup=reply_markup, parse_mode="HTML")
+
     return ConversationHandler.END
 
 # Обработка кнопок
