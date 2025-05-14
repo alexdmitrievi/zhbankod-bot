@@ -223,7 +223,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Отмена анкеты
 async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
-        await update.message.reply_text("⛔ Команда доступна только администратору.")
+        if update.message:
+            await update.message.reply_text("⛔ Команда доступна только администратору.")
+        elif update.callback_query:
+            await update.callback_query.answer("⛔ Команда только для админа", show_alert=True)
         return
 
     text = (
@@ -260,7 +263,16 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
         message_id=message.message_id
     )
 
-    await update.message.reply_text("✅ Пост опубликован и закреплён в канале.")
+    # Ответ пользователю после публикации
+    if update.message:
+        await update.message.reply_text("✅ Пост опубликован и закреплён в канале.")
+    elif update.callback_query:
+        await update.callback_query.answer("✅ Пост опубликован и закреплён", show_alert=True)
+
+    # Команда /cancel — отмена анкеты вручную
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("❌ Заявка отменена.")
+    return ConversationHandler.END
 
 # Главная функция
 def main():
