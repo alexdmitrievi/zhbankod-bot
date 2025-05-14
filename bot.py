@@ -9,6 +9,7 @@ from telegram.ext import (
     ApplicationBuilder, CommandHandler, ContextTypes,
     MessageHandler, filters, CallbackQueryHandler, ConversationHandler
 )
+from telegram.constants import ParseMode
 from google.oauth2.service_account import Credentials
 
 # Переменные окружения
@@ -21,6 +22,8 @@ if not creds_json:
     raise ValueError("GCP_CREDENTIALS_JSON is not set in environment variables")
 
 ADMIN_ID = 407721399
+CHANNEL_ID = -1002616572459
+BOT_USERNAME = "@zhbankod_bot"
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
@@ -215,6 +218,46 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.")
     return ConversationHandler.END
 
+async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ Команда доступна только администратору.")
+        return
+
+    text = (
+        "<b>📌 ЖБАНКОД — автоматизируем всё, кроме чая</b>\n\n"
+        "🤖 Мы создаём Telegram-ботов, которые берут на себя всю рутину:\n"
+        "заявки, оплаты, автоворонки, документы — и даже общение с клиентами.\n\n"
+        "🔹 Заявки — сразу в понятную таблицу\n"
+        "🔹 Оплаты — прямо в Telegram\n"
+        "🔹 Воронки, автоответы, автопостинг\n"
+        "🔹 Подходит для агентств, команд, ВЭД, трафика, логистики\n\n"
+        "📂 <b>Предоставляем документы</b> — можно провести в расходы и снизить налоги.\n\n"
+        "📚 В этом канале — реальные кейсы, фишки и решения по автоматизации разных ниш.\n\n"
+        "☕ Пока вы пьёте чай — ЖБАНКОД уже работает.\n\n"
+        "📝 <b>Хотите бота под свою задачу?</b>\n"
+        "📎 <a href='https://docs.google.com/spreadsheets/d/1eI1SkiA37tWKz9S5HCBl1XV8flODGOBL/edit?usp=sharing'>Скачать короткий бриф (2–3 минуты)</a>\n\n"
+        f"👇 Или нажмите на кнопку, чтобы оставить заявку прямо в Telegram:\n{BOT_USERNAME}"
+    )
+
+    reply_markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Оставить заявку", url=f"https://t.me/{BOT_USERNAME.replace('@', '')}")]
+    ])
+
+    message = await context.bot.send_message(
+        chat_id=CHANNEL_ID,
+        text=text,
+        reply_markup=reply_markup,
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True
+    )
+
+    await context.bot.pin_chat_message(
+        chat_id=CHANNEL_ID,
+        message_id=message.message_id
+    )
+
+    await update.message.reply_text("✅ Пост опубликован и закреплён в канале.")
+
 # Главная функция
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -225,6 +268,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", start))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("publish", publish_welcome_post))
 
     # Обработка inline-кнопок
     app.add_handler(CallbackQueryHandler(callback_handler))
