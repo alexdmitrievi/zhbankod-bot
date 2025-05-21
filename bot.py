@@ -4,12 +4,25 @@ import logging
 import datetime
 import gspread
 import asyncio
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, BotCommand
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, ContextTypes,
-    MessageHandler, filters, CallbackQueryHandler, ConversationHandler
+
+from telegram import (
+    Update,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    BotCommand
 )
 from telegram.constants import ParseMode
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+    CallbackQueryHandler,
+    ConversationHandler
+)
 from google.oauth2.service_account import Credentials
 
 # Переменные окружения
@@ -87,7 +100,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if data == "services":
-        await query.edit_message_text(
+        await query.message.reply_text(
             "🧠 <b>Что мы сделаем для вашего бизнеса:</b>\n\n"
             "✅ Автоформы — заявки сразу в Google Sheets без потерь\n"
             "✅ Приём оплаты прямо в боте (без сайта и программиста)\n"
@@ -95,20 +108,27 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "✅ AI, логистика, тендеры — любые задачи под ключ\n\n"
             "⚙️ Всё под ключ. Быстро. Без шаблонов. Только то, что приносит результат.\n\n"
             "👇 Нажмите «Оставить заявку» и расскажите, что нужно именно вам.",
-            parse_mode="HTML"
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+            ])
         )
 
     elif data == "portfolio":
-        await query.edit_message_text(
-            "📂 <b>Наши кейсы:</b>\n\n"
-            "• @Parser_newbot — бот, который обрабатывает документы для логистов\n"
-            "• @Capitalpay_newbot — анкета для HighRisk команд с автоворонкой\n\n"
-            "Мы не просто показываем кнопки. Мы запускаем работающие решения.",
-            parse_mode="HTML"
-        )
+        await query.message.reply_text(
+        "📂 <b>Наши кейсы:</b>\n\n"
+        "• @Parser_newbot — бот, который обрабатывает документы для логистов\n"
+        "• @Capitalpay_newbot — анкета для HighRisk команд с автоворонкой\n"
+        "• @bez_otkaza_bot — бот для кредитных брокеров с анкетой, GPT-менеджером и Google Sheets\n\n"
+        "Мы не просто показываем кнопки. Мы запускаем работающие решения.",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+        ])
+    )
 
     elif data == "form":
-        await query.edit_message_text(
+        await query.message.reply_text(
             "📬 Введите ваше <b>имя</b> и Telegram (или ник):",
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([
@@ -118,12 +138,13 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ASK_NAME
 
     elif data == "order":
-        await query.edit_message_text(
+        await query.message.reply_text(
             "💰 Хотите расчёт? Просто нажмите «Оставить заявку» — и мы уточним детали.\n\n"
             "📊 Укажем цену, сроки и покажем демо по вашему запросу.",
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")]
+                [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")],
+                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
             ])
         )
 
@@ -131,8 +152,8 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start(update, context)
 
     else:
-        await query.edit_message_text("❓ Неизвестная команда.")
-
+        await query.message.reply_text("❓ Неизвестная команда.")
+        
 # Анкета с кнопками меню
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.callback_query and update.callback_query.data == "cancel":
@@ -232,7 +253,7 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
     text = (
         "<b>📌 💔 Ты не вернулся к бывшей. Не возвращайся и к ручной работе.</b>\n"
         "<b>ЖБАНКОД</b> — создаём Telegram-ботов, которые делают всё за тебя.\n\n"
-        "🤖 Заявки, оплаты, воронки, документы и даже переписку с клиентами — бот берёт на себя рутину, пока ты занимаешься бизнесом (или пьёшь чай).\n\n"
+        "🤖 Заявки, оплаты, воронки, документы и даже переписку с клиентами — бот берёт на себя рутину, пока ты занимаешься бизнесом.\n\n"
         "✅ Заявки — сразу в таблицу\n"
         "✅ Оплаты — прямо в Telegram, без сайтов и программистов\n"
         "✅ Воронки, автоответы, автопостинг — всё на автопилоте\n"
