@@ -26,6 +26,14 @@ from telegram.ext import (
 )
 from google.oauth2.service_account import Credentials
 
+main_menu_keyboard = ReplyKeyboardMarkup([
+    ["🧠 Услуги", "📂 Примеры работ"],
+    ["📬 Оставить заявку", "💰 Заказать и оплатить"],
+    ["🤖 Задать вопрос GPT-сотруднику"],
+    ["📞 Связаться с менеджером"]
+], resize_keyboard=True)
+
+
 # Переменные окружения
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 TOKEN = os.environ.get("BOT_TOKEN")
@@ -83,11 +91,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-    await update.message.reply_text(
-        "👋 Привет! Выберите, что вас интересует:",
-        reply_markup=reply_markup
-    )
-
+    
     message_text = (
         "👋 Привет! Мы — <b>ЖБАНКОД</b>, создаём Telegram-ботов, которые приносят заявки, деньги и автоматизируют ваш бизнес.\n\n"
         "⚙️ Хотите анкету, CRM, приём оплаты или кастомное решение под ваши задачи?\n"
@@ -117,7 +121,7 @@ async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🧠 <b>Что мы сделаем для вашего бизнеса:</b>\n\n"
         "✅ Автоформы — заявки сразу в Google Sheets без потерь\n"
-        "✅ Приём оплаты прямо в боте (без сайта и программиста)\n"
+        "✅ Приём оплаты прямо в боте (без сайта и программиста, reply_markup=main_menu_keyboard)\n"
         "✅ Воронки, автопостинг и автоответы — работаем на автопилоте\n"
         "✅ AI, логистика, тендеры — любые задачи под ключ\n"
         "✅ GPT-сотрудники — онлайн-консультанты, которые отвечают за вас 24/7\n\n"
@@ -134,7 +138,7 @@ async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• @bez_otkaza_bot — бот для кредитных брокеров с GPT и таблицей\n\n"
         "Мы не просто показываем кнопки. Мы запускаем работающие решения.",
         parse_mode="HTML"
-    )
+    , reply_markup=main_menu_keyboard)
 
 async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await callback_handler_from_text(update, context, "form")
@@ -146,7 +150,7 @@ async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ask_gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "💬 Напиши свой вопрос, и наш GPT-сотрудник ответит вам прямо здесь:"
-    )
+    , reply_markup=main_menu_keyboard)
     context.user_data["awaiting_gpt"] = True
 
 
@@ -171,12 +175,12 @@ async def gpt_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         answer = response.choices[0].message.content.strip()
 
-        await update.message.reply_text(answer)
-        await update.message.reply_text("✍️ Можете задать следующий вопрос или нажмите /menu для возврата в главное меню.")
+        await update.message.reply_text(answer, reply_markup=main_menu_keyboard)
+        await update.message.reply_text("✍️ Можете задать следующий вопрос или нажмите /menu для возврата в главное меню.", reply_markup=main_menu_keyboard)
         context.user_data["awaiting_gpt"] = False
 
     except Exception as e:
-        await update.message.reply_text("⚠️ Ошибка при обращении к GPT. Попробуйте позже.")
+        await update.message.reply_text("⚠️ Ошибка при обращении к GPT. Попробуйте позже.", reply_markup=main_menu_keyboard)
         logging.error(f"GPT Error: {e}")
         context.user_data["awaiting_gpt"] = False
 
@@ -192,7 +196,7 @@ async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "✍️ Расскажите, *какой бот вам нужен*:",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel", reply_markup=main_menu_keyboard)]
         ])
     )
     return ASK_PROJECT
@@ -208,7 +212,7 @@ async def ask_project(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💸 Укажите *желаемый бюджет* проекта:",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel", reply_markup=main_menu_keyboard)]
         ])
     )
     return ASK_BUDGET
@@ -235,7 +239,7 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     except Exception as e:
         logging.error(f"Ошибка при записи в Google Sheets: {e}")
-        await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.")
+        await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.", reply_markup=main_menu_keyboard)
         return ConversationHandler.END
 
     text = (
@@ -247,7 +251,7 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🗓️ Дата: {date}"
     )
     await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
-    await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.")
+    await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.", reply_markup=main_menu_keyboard)
     return ConversationHandler.END
 
 # /help команда
@@ -263,7 +267,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• Укажите бюджет\n\n"
         "📞 Или сразу пишите <a href='https://t.me/zhbankov_alex'>@zhbankov_alex</a>",
         parse_mode="HTML"
-    )
+    , reply_markup=main_menu_keyboard)
 
     return ConversationHandler.END
 
@@ -271,7 +275,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         if update.message:
-            await update.message.reply_text("⛔ Команда доступна только администратору.")
+            await update.message.reply_text("⛔ Команда доступна только администратору.", reply_markup=main_menu_keyboard)
         elif update.callback_query:
             await update.callback_query.answer("⛔ Команда только для админа", show_alert=True)
         return
@@ -314,13 +318,13 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 
     if update.message:
-        await update.message.reply_text("✅ Пост с картинкой опубликован и закреплён.")
+        await update.message.reply_text("✅ Пост с картинкой опубликован и закреплён.", reply_markup=main_menu_keyboard)
     elif update.callback_query:
         await update.callback_query.answer("✅ Пост с картинкой опубликован и закреплён", show_alert=True)
 
     # Команда /cancel — отмена анкеты вручную
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❌ Заявка отменена.")
+    await update.message.reply_text("❌ Заявка отменена.", reply_markup=main_menu_keyboard)
     return ConversationHandler.END
 
 #Одна функция 
@@ -338,7 +342,8 @@ async def callback_handler_from_text(update: Update, context: ContextTypes.DEFAU
 
 #Вторая функция
 async def contact_manager(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👨‍💼 Напишите @zhbankov_alex — он поможет с любыми вопросами.")
+    await update.message.reply_text("👨‍💼 Напишите @zhbankov_alex — он поможет с любыми вопросами.", reply_markup=main_menu_keyboard)
+
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -347,6 +352,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "cancel":
         await start(update, context)
+
 
 # Главная функция
 def main():
@@ -361,7 +367,7 @@ def main():
     app.add_handler(CommandHandler("publish", publish_welcome_post))
 
     # Обработка inline-кнопок
-    app.add_handler(CallbackQueryHandler(callback_handler))
+    #app.add_handler(CallbackQueryHandler(callback_handler))
 
     # Обработка Reply-кнопок
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
