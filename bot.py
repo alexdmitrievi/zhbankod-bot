@@ -116,7 +116,7 @@ async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ASK_NAME
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return await callback_handler_from_text(update, context, "order")
+    await update.message.reply_text("🚧 Раздел 'Заказать и оплатить' скоро будет доступен.", reply_markup=main_menu_keyboard)
 
 async def ask_gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -273,21 +273,25 @@ def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(set_menu(app.bot))
 
+    # Команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("publish", publish_welcome_post))
 
+    # Обработка reply-кнопок
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), portfolio))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), order))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), ask_project))  # можно подменить
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
 
+    # Анкета (через reply-кнопку "Оставить заявку")
     conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(callback_handler, pattern="^form$")],
+        entry_points=[
+            MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry)
+        ],
         states={
             ASK_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name),
