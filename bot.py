@@ -4,6 +4,7 @@ import logging
 import datetime
 import gspread
 import asyncio
+import openai
 
 from telegram import (
     Update,
@@ -26,6 +27,7 @@ from telegram.ext import (
 from google.oauth2.service_account import Credentials
 
 # Переменные окружения
+openai.api_key = os.getenv("OPENAI_API_KEY")
 TOKEN = os.environ.get("BOT_TOKEN")
 if not TOKEN:
     raise ValueError("BOT_TOKEN is not set in environment variables")
@@ -70,15 +72,21 @@ async def set_menu(bot):
     await bot.set_my_commands(commands)
 
 # Команда /start
+from telegram import ReplyKeyboardMarkup, KeyboardButton
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🧠 Услуги", callback_data="services")],
-        [InlineKeyboardButton("📂 Примеры работ", callback_data="portfolio")],
-        [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")],
-        [InlineKeyboardButton("💰 Заказать и оплатить", callback_data="order")],
-        [InlineKeyboardButton("📞 Связаться", url="https://t.me/zhbankov_alex")]
+        ["🧠 Услуги", "📂 Примеры работ"],
+        ["📬 Оставить заявку", "💰 Заказать и оплатить"],
+        ["🤖 Задать вопрос GPT-сотруднику"],
+        ["📞 Связаться с менеджером"]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+    await update.message.reply_text(
+        "👋 Привет! Выберите, что вас интересует:",
+        reply_markup=reply_markup
+    )
 
     message_text = (
         "👋 Привет! Мы — <b>ЖБАНКОД</b>, создаём Telegram-ботов, которые приносят заявки, деньги и автоматизируют ваш бизнес.\n\n"
@@ -165,7 +173,45 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     else:
         await query.message.reply_text("❓ Неизвестная команда.")
-        
+
+# GPT-менеджер
+async def ask_gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "💬 Напиши свой вопрос, и наш GPT-сотрудник ответит вам прямо здесь:"
+    )
+    context.user_data["awaiting_gpt"] = True
+
+
+async def gpt_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.user_data.get("awaiting_gpt"):
+        return
+
+    question = update.message.text
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты — дружелюбный, профессиональный менеджер по продажам ЖБАНКОДа. Отвечай конкретно, по делу и по-русски. Продавай уверенно, но не навязчиво."
+                },
+                {"role": "user", "content": question}
+            ],
+            temperature=0.7,
+            max_tokens=600
+        )
+        answer = response.choices[0].message.content.strip()
+
+        await update.message.reply_text(answer)
+        await update.message.reply_text("✍️ Можете задать следующий вопрос или нажмите /menu для возврата в главное меню.")
+        context.user_data["awaiting_gpt"] = False
+
+    except Exception as e:
+        await update.message.reply_text("⚠️ Ошибка при обращении к GPT. Попробуйте позже.")
+        logging.error(f"GPT Error: {e}")
+        context.user_data["awaiting_gpt"] = False
+
 # Анкета с кнопками меню
 async def ask_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.callback_query and update.callback_query.data == "cancel":
@@ -323,6 +369,11 @@ def main():
 
     # Обработка inline-кнопок
     app.add_handler(CallbackQueryHandler(callback_handler))
+
+    #Обработка Relpy-кнопок
+    app.add_handler(MessageHandler(filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
+
 
     # Анкетный сценарий
     conv_handler = ConversationHandler(
