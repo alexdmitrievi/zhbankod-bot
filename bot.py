@@ -268,6 +268,21 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data == "cancel":
         await start(update, context)
 
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    await update.message.reply_text(
+        "❓ <b>Как пользоваться ботом ЖБАНКОД:</b>\n\n"
+        "🚀 Нажмите <code>/start</code> или <code>/menu</code>, чтобы открыть главное меню.\n\n"
+        "📬 В разделе <b>«Оставить заявку»</b> вы можете отправить нам запрос:\n"
+        "• Напишите ваше имя и Telegram\n"
+        "• Опишите идею бота\n"
+        "• Укажите бюджет\n\n"
+        "📞 Или сразу пишите <a href='https://t.me/zhbankov_alex'>@zhbankov_alex</a>",
+        parse_mode="HTML",
+        reply_markup=main_menu_keyboard
+    )
+    return ConversationHandler.END
+
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
     loop = asyncio.get_event_loop()
@@ -319,21 +334,6 @@ def main():
 
     logging.info("Бот запущен 🚀")
     app.run_polling()
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.clear()
-    await update.message.reply_text(
-        "❓ <b>Как пользоваться ботом ЖБАНКОД:</b>\n\n"
-        "🚀 Нажмите <code>/start</code> или <code>/menu</code>, чтобы открыть главное меню.\n\n"
-        "📬 В разделе <b>«Оставить заявку»</b> вы можете отправить нам запрос:\n"
-        "• Напишите ваше имя и Telegram\n"
-        "• Опишите идею бота\n"
-        "• Укажите бюджет\n\n"
-        "📞 Или сразу пишите <a href='https://t.me/zhbankov_alex'>@zhbankov_alex</a>",
-        parse_mode="HTML",
-        reply_markup=main_menu_keyboard
-    )
-    return ConversationHandler.END
 
 if __name__ == "__main__":
     main()
