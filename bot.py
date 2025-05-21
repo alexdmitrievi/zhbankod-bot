@@ -113,66 +113,34 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # Обработка кнопок
-async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    data = query.data
-    await query.answer()
-
-    if data == "services":
-        await query.message.reply_text(
-            "🧠 <b>Что мы сделаем для вашего бизнеса:</b>\n\n"
-            "✅ Автоформы — заявки сразу в Google Sheets без потерь\n"
-            "✅ Приём оплаты прямо в боте (без сайта и программиста)\n"
-            "✅ Воронки, автопостинг и автоответы — работаем на автопилоте\n"
-            "✅ AI, логистика, тендеры — любые задачи под ключ\n"
-            "✅ GPT-сотрудники — онлайн-консультанты, которые отвечают за вас 24/7\n\n"
-            "⚙️ Всё под ключ. Быстро. Без шаблонов. Только то, что приносит результат.\n\n"
-            "👇 Нажмите «Оставить заявку» и расскажите, что нужно именно вам.",
-            parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-            ])
-        )
-
-    elif data == "portfolio":
-        await query.message.reply_text(
-        "📂 <b>Наши кейсы:</b>\n\n"
-        "• @Parser_newbot — бот, который обрабатывает документы для логистов\n"
-        "• @Capitalpay_newbot — анкета для HighRisk команд с автоворонкой\n"
-        "• @bez_otkaza_bot — бот для кредитных брокеров с анкетой, GPT-менеджером и Google Sheets\n\n"
-        "Мы не просто показываем кнопки. Мы запускаем работающие решения.",
-        parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-        ])
+async def services(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🧠 <b>Что мы сделаем для вашего бизнеса:</b>\n\n"
+        "✅ Автоформы — заявки сразу в Google Sheets без потерь\n"
+        "✅ Приём оплаты прямо в боте (без сайта и программиста)\n"
+        "✅ Воронки, автопостинг и автоответы — работаем на автопилоте\n"
+        "✅ AI, логистика, тендеры — любые задачи под ключ\n"
+        "✅ GPT-сотрудники — онлайн-консультанты, которые отвечают за вас 24/7\n\n"
+        "⚙️ Всё под ключ. Быстро. Без шаблонов. Только то, что приносит результат.\n\n"
+        "👇 Нажмите «Оставить заявку» и расскажите, что нужно именно вам.",
+        parse_mode="HTML"
     )
 
-    elif data == "form":
-        await query.message.reply_text(
-            "📬 Введите ваше <b>имя</b> и Telegram (или ник):",
-            parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-            ])
-        )
-        return ASK_NAME
+async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "📂 <b>Наши кейсы:</b>\n\n"
+        "• @Parser_newbot — бот для логистов\n"
+        "• @Capitalpay_newbot — анкета для HighRisk команд\n"
+        "• @bez_otkaza_bot — бот для кредитных брокеров с GPT и таблицей\n\n"
+        "Мы не просто показываем кнопки. Мы запускаем работающие решения.",
+        parse_mode="HTML"
+    )
 
-    elif data == "order":
-        await query.message.reply_text(
-            "💰 Хотите расчёт? Просто нажмите «Оставить заявку» — и мы уточним детали.\n\n"
-            "📊 Укажем цену, сроки и покажем демо по вашему запросу.",
-            parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("📬 Оставить заявку", callback_data="form")],
-                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-            ])
-        )
+async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    return await callback_handler_from_text(update, context, "form")
 
-    elif data == "cancel":
-        await start(update, context)
-
-    else:
-        await query.message.reply_text("❓ Неизвестная команда.")
+async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    return await callback_handler_from_text(update, context, "order")
 
 # GPT-менеджер
 async def ask_gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -387,15 +355,13 @@ def main():
     # Обработка inline-кнопок
     app.add_handler(CallbackQueryHandler(callback_handler))
 
-    #Обработка Relpy-кнопок
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), lambda u, c: callback_handler_from_text(u, c, "services")))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), lambda u, c: callback_handler_from_text(u, c, "portfolio")))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), lambda u, c: callback_handler_from_text(u, c, "form")))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), lambda u, c: callback_handler_from_text(u, c, "order")))
+    # Обработка Reply-кнопок
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), portfolio))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), order))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
-
-    # Последними:
-    app.add_handler(MessageHandler(filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
 
     # Анкетный сценарий
