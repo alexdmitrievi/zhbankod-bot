@@ -340,6 +340,14 @@ async def callback_handler_from_text(update: Update, context: ContextTypes.DEFAU
 async def contact_manager(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👨‍💼 Напишите @zhbankov_alex — он поможет с любыми вопросами.")
 
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    data = query.data
+    await query.answer()
+
+    if data == "cancel":
+        await start(update, context)
+
 # Главная функция
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
