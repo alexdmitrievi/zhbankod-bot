@@ -107,7 +107,13 @@ async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return await callback_handler_from_text(update, context, "form")
+    await update.message.reply_text(
+        "✍️ Введите ваше имя:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+        ])
+    )
+    return ASK_NAME
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return await callback_handler_from_text(update, context, "order")
@@ -254,18 +260,6 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("✅ Пост с картинкой опубликован и закреплён.", reply_markup=main_menu_keyboard)
 
 # Осталась главная функция main()
-
-async def callback_handler_from_text(update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
-    class DummyQuery:
-        def __init__(self, message, data):
-            self.message = message
-            self.data = data
-
-        async def answer(self):
-            pass
-
-    update.callback_query = DummyQuery(update.message, data)
-    await callback_handler(update, context)
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
