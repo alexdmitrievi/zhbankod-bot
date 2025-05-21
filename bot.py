@@ -122,24 +122,33 @@ async def ask_gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def gpt_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_gpt"):
         return
+
     question = update.message.text
+
     try:
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {
                     "role": "system",
-                    "content": "Ты — дружелюбный, профессиональный менеджер по продажам ЖБАНКОДа. Отвечай конкретно, по делу и по-русски. Продавай уверенно, но не навязчиво."
+                    "content": (
+                        "Ты — эксперт по созданию Telegram-ботов для бизнеса. "
+                        "Отвечай только на вопросы, связанные с чат-ботами в Telegram: "
+                        "автоматизация, воронки, CRM, приём заявок и оплат, интеграции и т.п.\n\n"
+                        "Если вопрос не по теме Telegram-ботов, мягко уточни и направь клиента к кнопке «Связаться с менеджером»."
+                    )
                 },
                 {"role": "user", "content": question}
             ],
             temperature=0.7,
             max_tokens=600
         )
+
         answer = response.choices[0].message.content.strip()
         await update.message.reply_text(answer, reply_markup=main_menu_keyboard)
         await update.message.reply_text("✍️ Можете задать следующий вопрос или нажмите /menu для возврата в главное меню.", reply_markup=main_menu_keyboard)
         context.user_data["awaiting_gpt"] = False
+
     except Exception as e:
         await update.message.reply_text("⚠️ Ошибка при обращении к GPT. Попробуйте позже.", reply_markup=main_menu_keyboard)
         logging.error(f"GPT Error: {e}")
