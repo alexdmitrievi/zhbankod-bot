@@ -355,6 +355,23 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.")
     return ConversationHandler.END
 
+#Одна функция 
+async def callback_handler_from_text(update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
+    class DummyQuery:
+        def __init__(self, message):
+            self.message = message
+            self.data = data
+
+        async def answer(self):
+            pass
+
+    update.callback_query = DummyQuery(update.message)
+    await callback_handler(update, context)
+
+#Вторая функция
+async def contact_manager(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👨‍💼 Напишите @zhbankov_alex — он поможет с любыми вопросами.")
+
 # Главная функция
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
@@ -373,6 +390,11 @@ def main():
     #Обработка Relpy-кнопок
     app.add_handler(MessageHandler(filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), lambda u, c: callback_handler_from_text(u, c, "services")))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), lambda u, c: callback_handler_from_text(u, c, "portfolio")))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), lambda u, c: callback_handler_from_text(u, c, "form")))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), lambda u, c: callback_handler_from_text(u, c, "order")))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
 
 
     # Анкетный сценарий
