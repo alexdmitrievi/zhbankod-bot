@@ -86,7 +86,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👇 Просто выберите, что вас интересует — и мы покажем, как это работает:"
     )
 
-    with open("/mnt/data/THIS IS ZHBANKOD.jpg", "rb") as photo:
+    with open("assets/THIS_IS_ZHBANKOD.jpg", "rb") as photo:
         if update.message:
             await update.message.reply_photo(
                 photo=photo,
@@ -285,7 +285,7 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
         [InlineKeyboardButton("📬 Оставить заявку", url=f"https://t.me/{BOT_USERNAME.replace('@', '')}")]
     ])
 
-    with open("/mnt/data/THIS IS ZHBANKOD.jpg", "rb") as photo:
+    with open("assets/THIS_IS_ZHBANKOD.jpg", "rb") as photo:
         message = await context.bot.send_photo(
             chat_id=CHANNEL_ID,
             photo=photo,
