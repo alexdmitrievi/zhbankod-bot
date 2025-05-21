@@ -295,9 +295,10 @@ def main():
     app.add_handler(CommandHandler("publish", publish_welcome_post))
 
     # 📌 Анкета должна идти раньше всех текстовых MessageHandler'ов
+    app.add_handler(CallbackQueryHandler(callback_handler, pattern="^cancel$"))
     conv_handler = ConversationHandler(
         entry_points=[
-            MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry)
+            MessageHandler(filters.TEXT & filters.Regex("Оставить заявку"), form_entry)
         ],
         states={
             ASK_NAME: [
