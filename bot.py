@@ -4,7 +4,7 @@ import logging
 import datetime
 import gspread
 import asyncio
-import openai
+from openai import OpenAI
 
 from telegram import (
     Update,
@@ -27,7 +27,7 @@ from telegram.ext import (
 from google.oauth2.service_account import Credentials
 
 # Переменные окружения
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 TOKEN = os.environ.get("BOT_TOKEN")
 if not TOKEN:
     raise ValueError("BOT_TOKEN is not set in environment variables")
@@ -189,7 +189,7 @@ async def gpt_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     question = update.message.text
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {
