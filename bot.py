@@ -86,10 +86,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👇 Просто выберите, что вас интересует — и мы покажем, как это работает:"
     )
 
-    if update.message:
-        await update.message.reply_text(message_text, reply_markup=reply_markup, parse_mode="HTML")
-    elif update.callback_query:
-        await update.callback_query.edit_message_text(message_text, reply_markup=reply_markup, parse_mode="HTML")
+    with open("/mnt/data/THIS IS ZHBANKOD.jpg", "rb") as photo:
+        if update.message:
+            await update.message.reply_photo(
+                photo=photo,
+                caption=message_text,
+                reply_markup=reply_markup,
+                parse_mode="HTML"
+            )
+        elif update.callback_query:
+            await update.callback_query.message.reply_photo(
+                photo=photo,
+                caption=message_text,
+                reply_markup=reply_markup,
+                parse_mode="HTML"
+            )
 
     return ConversationHandler.END
 
@@ -274,13 +285,14 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
         [InlineKeyboardButton("📬 Оставить заявку", url=f"https://t.me/{BOT_USERNAME.replace('@', '')}")]
     ])
 
-    message = await context.bot.send_message(
-        chat_id=CHANNEL_ID,
-        text=text,
-        reply_markup=reply_markup,
-        parse_mode=ParseMode.HTML,
-        disable_web_page_preview=True
-    )
+    with open("/mnt/data/THIS IS ZHBANKOD.jpg", "rb") as photo:
+        message = await context.bot.send_photo(
+            chat_id=CHANNEL_ID,
+            photo=photo,
+            caption=text,
+            reply_markup=reply_markup,
+            parse_mode=ParseMode.HTML
+        )
 
     await context.bot.pin_chat_message(
         chat_id=CHANNEL_ID,
@@ -288,9 +300,9 @@ async def publish_welcome_post(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 
     if update.message:
-        await update.message.reply_text("✅ Пост опубликован и закреплён в канале.")
+        await update.message.reply_text("✅ Пост с картинкой опубликован и закреплён.")
     elif update.callback_query:
-        await update.callback_query.answer("✅ Пост опубликован и закреплён", show_alert=True)
+        await update.callback_query.answer("✅ Пост с картинкой опубликован и закреплён", show_alert=True)
 
     # Команда /cancel — отмена анкеты вручную
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
