@@ -279,15 +279,7 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("publish", publish_welcome_post))
 
-    # Обработка reply-кнопок
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), portfolio))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), ask_project))  # можно подменить
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
-
-    # Анкета (через reply-кнопку "Оставить заявку")
+    # 📌 Анкета должна идти раньше всех текстовых MessageHandler'ов
     conv_handler = ConversationHandler(
         entry_points=[
             MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry)
@@ -314,6 +306,16 @@ def main():
         per_message=True
     )
     app.add_handler(conv_handler)
+
+    # Reply-кнопки
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), portfolio))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), order))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
+
+    # GPT должен быть последним
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
 
     logging.info("Бот запущен 🚀")
     app.run_polling()
