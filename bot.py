@@ -358,14 +358,14 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #Одна функция 
 async def callback_handler_from_text(update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
     class DummyQuery:
-        def __init__(self, message):
+        def __init__(self, message, data):
             self.message = message
             self.data = data
 
         async def answer(self):
             pass
 
-    update.callback_query = DummyQuery(update.message)
+    update.callback_query = DummyQuery(update.message, data)
     await callback_handler(update, context)
 
 #Вторая функция
