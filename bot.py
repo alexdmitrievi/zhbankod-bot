@@ -388,14 +388,15 @@ def main():
     app.add_handler(CallbackQueryHandler(callback_handler))
 
     #Обработка Relpy-кнопок
-    app.add_handler(MessageHandler(filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), lambda u, c: callback_handler_from_text(u, c, "services")))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), lambda u, c: callback_handler_from_text(u, c, "portfolio")))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), lambda u, c: callback_handler_from_text(u, c, "form")))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), lambda u, c: callback_handler_from_text(u, c, "order")))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
 
+    # Последними:
+    app.add_handler(MessageHandler(filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
 
     # Анкетный сценарий
     conv_handler = ConversationHandler(
