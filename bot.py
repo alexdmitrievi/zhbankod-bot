@@ -179,21 +179,6 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-        summary = (
-            f"📥 *Новая заявка!*\n\n"
-            f"👤 Имя: {data.get('name', '-')}\n"
-            f"🧠 Проект: {data.get('project', '-')}\n"
-            f"💸 Бюджет: {data.get('budget', '-')}\n"
-            f"🔗 Telegram: {tg_link}\n"
-            f"🗓️ Дата: {date}"
-        )
-        await context.bot.send_message(chat_id=ADMIN_ID, text=summary, parse_mode="Markdown")
-        await update.message.reply_text(
-            "✅ Спасибо! Мы свяжемся с вами в Telegram.",
-            reply_markup=main_menu_keyboard
-        )
-        return
-
     # 📩 Всё остальное — передаём в GPT-сотруднику
     return await gpt_reply(update, context)
 
