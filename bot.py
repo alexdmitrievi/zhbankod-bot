@@ -165,9 +165,9 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             sheet.append_row([
-                data.get('name', ''),
-                data.get('project', ''),
-                data.get('budget', ''),
+                data.get("name", ""),
+                data.get("project", ""),
+                data.get("budget", ""),
                 tg_link,
                 date
             ])
@@ -179,7 +179,29 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-    # 📩 Всё остальное — передаём в GPT-сотруднику
+        # Подготовка сообщения для админа
+        summary = (
+            f"📥 *Новая заявка!*\n\n"
+            f"👤 Имя: {escape_md(data.get('name', '-'))}\n"
+            f"🧠 Проект: {escape_md(data.get('project', '-'))}\n"
+            f"💸 Бюджет: {escape_md(data.get('budget', '-'))}\n"
+            f"🔗 Telegram: {escape_md(tg_link)}\n"
+            f"🗓️ Дата: {escape_md(date)}"
+        )
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=summary,
+            parse_mode="MarkdownV2"
+        )
+
+        # Ответ пользователю
+        await update.message.reply_text(
+            "✅ Спасибо! Мы свяжемся с вами в Telegram.",
+            reply_markup=main_menu_keyboard
+        )
+        return
+
+    # Если не анкета — GPT
     return await gpt_reply(update, context)
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -248,69 +270,6 @@ async def ask_project(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     )
     return ASK_BUDGET
-
-async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["budget"] = update.message.text
-    context.user_data["form_step"] = None
-
-    user = update.message.from_user
-    data = context.user_data
-    date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-    tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
-
-    try:
-        sheet.append_row([
-            data.get("name", ""),
-            data.get("project", ""),
-            data.get("budget", ""),
-            tg_link,
-            date
-        ])
-    except Exception as e:
-        logging.error(f"❌ Ошибка при записи в Google Sheets: {e}")
-        await update.message.reply_text(
-            f"⚠️ Не удалось сохранить заявку: {e}",
-            reply_markup=main_menu_keyboard
-        )
-        return
-
-    summary = (
-        f"📥 *Новая заявка!*\n\n"
-        f"👤 Имя: {escape_md(data.get('name', '-'))}\n"
-        f"🧠 Проект: {escape_md(data.get('project', '-'))}\n"
-        f"💸 Бюджет: {escape_md(data.get('budget', '-'))}\n"
-        f"🔗 Telegram: {escape_md(tg_link)}\n"
-        f"🗓️ Дата: {escape_md(date)}"
-    )
-
-    await context.bot.send_message(
-        chat_id=ADMIN_ID,
-        text=summary,
-        parse_mode="MarkdownV2"
-    )
-
-    await update.message.reply_text(
-        "✅ Спасибо! Мы свяжемся с вами в Telegram.",
-        reply_markup=main_menu_keyboard
-    )
-
-    # Отправка админу и пользователю
-    text = (
-        f"📥 *Новая заявка!*\n\n"
-        f"👤 Имя: {data.get('name', '-')}\n"
-        f"🧠 Проект: {data.get('project', '-')}\n"
-        f"💸 Бюджет: {data.get('budget', '-')}\n"
-        f"🔗 Telegram: {tg_link}\n"
-        f"🗓️ Дата: {date}"
-    )
-    await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
-    await update.message.reply_text(
-        "✅ Спасибо! Мы свяжемся с вами в Telegram.",
-        reply_markup=main_menu_keyboard
-    )
-
-    # Очистим шаг после завершения анкеты
-    context.user_data["form_step"] = None
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.", reply_markup=main_menu_keyboard)
