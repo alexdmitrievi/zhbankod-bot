@@ -119,8 +119,9 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     step = context.user_data.get("form_step")
 
-    # 📍 Первый запуск анкеты
-    if "Оставить заявку" in text and not step:
+    # 📍 Первый вход в анкету
+    if "Оставить заявку" in text and step is None:
+        context.user_data.clear()  # сбрасываем предыдущие данные
         context.user_data["form_step"] = "ask_name"
         await update.message.reply_text(
             "✍️ Введите ваше имя:",
@@ -131,7 +132,10 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "ask_name":
-        context.user_data["name"] = update.message.text
+        # Защита от повторного нажатия кнопки
+        if "Оставить заявку" in text:
+            return
+        context.user_data["name"] = text
         context.user_data["form_step"] = "ask_project"
         await update.message.reply_text(
             "✍️ Расскажите, *какой бот вам нужен*:",
@@ -143,7 +147,7 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "ask_project":
-        context.user_data["project"] = update.message.text
+        context.user_data["project"] = text
         context.user_data["form_step"] = "ask_budget"
         await update.message.reply_text(
             "💸 Укажите *желаемый бюджет* проекта:",
@@ -155,7 +159,7 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "ask_budget":
-        context.user_data["budget"] = update.message.text
+        context.user_data["budget"] = text
         context.user_data["form_step"] = None
 
         user = update.message.from_user
@@ -165,9 +169,9 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             sheet.append_row([
-                data['name'],
-                data['project'],
-                data['budget'],
+                data.get('name', ''),
+                data.get('project', ''),
+                data.get('budget', ''),
                 tg_link,
                 date
             ])
@@ -188,7 +192,7 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.", reply_markup=main_menu_keyboard)
         return
 
-    # 💬 Если пользователь вне анкеты — передаём GPT-сотруднику
+    # Всё остальное — к GPT
     return await gpt_reply(update, context)
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
