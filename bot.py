@@ -106,22 +106,13 @@ async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=main_menu_keyboard
     )
 
-async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["form_step"] = "ask_name"
-    await update.message.reply_text(
-        "✍️ Введите ваше имя:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
-        ])
-    )
-
 async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     step = context.user_data.get("form_step")
 
     # 📍 Первый вход в анкету
     if "Оставить заявку" in text and step is None:
-        context.user_data.clear()  # сбрасываем предыдущие данные
+        context.user_data.clear()
         context.user_data["form_step"] = "ask_name"
         await update.message.reply_text(
             "✍️ Введите ваше имя:",
@@ -132,7 +123,6 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if step == "ask_name":
-        # Защита от повторного нажатия кнопки
         if "Оставить заявку" in text:
             return
         context.user_data["name"] = text
@@ -177,22 +167,28 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
         except Exception as e:
             logging.error(f"Ошибка при записи в Google Sheets: {e}")
-            await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.", reply_markup=main_menu_keyboard)
+            await update.message.reply_text(
+                "⚠️ Ошибка при сохранении заявки. Попробуйте позже.",
+                reply_markup=main_menu_keyboard
+            )
             return
 
-        text = (
+        summary = (
             f"📥 *Новая заявка!*\n\n"
-            f"👤 Имя: {data['name']}\n"
-            f"🧠 Проект: {data['project']}\n"
-            f"💸 Бюджет: {data['budget']}\n"
+            f"👤 Имя: {data.get('name', '-')}\n"
+            f"🧠 Проект: {data.get('project', '-')}\n"
+            f"💸 Бюджет: {data.get('budget', '-')}\n"
             f"🔗 Telegram: {tg_link}\n"
             f"🗓️ Дата: {date}"
         )
-        await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
-        await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.", reply_markup=main_menu_keyboard)
+        await context.bot.send_message(chat_id=ADMIN_ID, text=summary, parse_mode="Markdown")
+        await update.message.reply_text(
+            "✅ Спасибо! Мы свяжемся с вами в Telegram.",
+            reply_markup=main_menu_keyboard
+        )
         return
 
-    # Всё остальное — к GPT
+    # 📩 Всё остальное — передаём в GPT-сотруднику
     return await gpt_reply(update, context)
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -264,13 +260,15 @@ async def ask_project(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["budget"] = update.message.text
+    context.user_data["form_step"] = None  # сбрасываем этап анкеты
+
     user = update.message.from_user
     data = context.user_data
     date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
 
     try:
-        # Безопасная вставка в таблицу
+        # Запись в Google Sheets
         sheet.append_row([
             data.get("name", ""),
             data.get("project", ""),
@@ -285,6 +283,21 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=main_menu_keyboard
         )
         return
+
+    # Подтверждение и уведомление
+    summary = (
+        f"📥 *Новая заявка!*\n\n"
+        f"👤 Имя: {data.get('name', '-')}\n"
+        f"🧠 Проект: {data.get('project', '-')}\n"
+        f"💸 Бюджет: {data.get('budget', '-')}\n"
+        f"🔗 Telegram: {tg_link}\n"
+        f"🗓️ Дата: {date}"
+    )
+    await context.bot.send_message(chat_id=ADMIN_ID, text=summary, parse_mode="Markdown")
+    await update.message.reply_text(
+        "✅ Спасибо! Мы свяжемся с вами в Telegram.",
+        reply_markup=main_menu_keyboard
+    )
 
     # Отправка админу и пользователю
     text = (
