@@ -107,6 +107,12 @@ async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    text = update.message.text
+
+    # Отладочный вывод в консоль (для Render — это logs)
+    print(f"[DEBUG] form_entry вызван от @{user.username} ({user.id}) с текстом: {text!r}")
+
     await update.message.reply_text(
         "✍️ Введите ваше имя:",
         reply_markup=InlineKeyboardMarkup([
@@ -294,11 +300,13 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("publish", publish_welcome_post))
 
-    # 📌 Анкета должна идти раньше всех текстовых MessageHandler'ов
+    # Обработка inline-кнопки "Вернуться в меню"
     app.add_handler(CallbackQueryHandler(callback_handler, pattern="^cancel$"))
+
+    # Анкета — должен быть добавлен раньше любых других текстовых хендлеров
     conv_handler = ConversationHandler(
         entry_points=[
-            MessageHandler(filters.TEXT & filters.Regex("Оставить заявку"), form_entry)
+            MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry)
         ],
         states={
             ASK_NAME: [
@@ -323,14 +331,14 @@ def main():
     )
     app.add_handler(conv_handler)
 
-    # Reply-кнопки
+    # Reply-кнопки главного меню
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), portfolio))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), order))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
 
-    # GPT должен быть последним
+    # GPT — должен быть последним, чтобы не мешать анкете
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
 
     logging.info("Бот запущен 🚀")
