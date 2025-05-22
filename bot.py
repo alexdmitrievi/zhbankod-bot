@@ -107,19 +107,82 @@ async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def form_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.message.from_user
-    text = update.message.text
-
-    # Отладочный вывод в консоль (для Render — это logs)
-    print(f"[DEBUG] form_entry вызван от @{user.username} ({user.id}) с текстом: {text!r}")
-
+    context.user_data["form_step"] = "ask_name"
     await update.message.reply_text(
         "✍️ Введите ваше имя:",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
         ])
     )
-    return ASK_NAME
+
+async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    step = context.user_data.get("form_step")
+
+    # 📍 Если пользователь только нажал кнопку "Оставить заявку"
+    if "Оставить заявку" in text and not step:
+        return await form_entry(update, context)
+
+    if step == "ask_name":
+        context.user_data["name"] = update.message.text
+        context.user_data["form_step"] = "ask_project"
+        await update.message.reply_text(
+            "✍️ Расскажите, *какой бот вам нужен*:",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+            ])
+        )
+        return
+
+    if step == "ask_project":
+        context.user_data["project"] = update.message.text
+        context.user_data["form_step"] = "ask_budget"
+        await update.message.reply_text(
+            "💸 Укажите *желаемый бюджет* проекта:",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+            ])
+        )
+        return
+
+    if step == "ask_budget":
+        context.user_data["budget"] = update.message.text
+        context.user_data["form_step"] = None
+
+        user = update.message.from_user
+        data = context.user_data
+        date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+        tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
+
+        try:
+            sheet.append_row([
+                data['name'],
+                data['project'],
+                data['budget'],
+                tg_link,
+                date
+            ])
+        except Exception as e:
+            logging.error(f"Ошибка при записи в Google Sheets: {e}")
+            await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.", reply_markup=main_menu_keyboard)
+            return
+
+        text = (
+            f"📥 *Новая заявка!*\n\n"
+            f"👤 Имя: {data['name']}\n"
+            f"🧠 Проект: {data['project']}\n"
+            f"💸 Бюджет: {data['budget']}\n"
+            f"🔗 Telegram: {tg_link}\n"
+            f"🗓️ Дата: {date}"
+        )
+        await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
+        await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.", reply_markup=main_menu_keyboard)
+        return
+
+    # Если ни одно условие не сработало — отправим в GPT
+    return await gpt_reply(update, context)
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🚧 Раздел 'Заказать и оплатить' скоро будет доступен.", reply_markup=main_menu_keyboard)
@@ -303,46 +366,19 @@ def main():
     # Обработка inline-кнопки "Вернуться в меню"
     app.add_handler(CallbackQueryHandler(callback_handler, pattern="^cancel$"))
 
-    # Анкета — должен быть добавлен раньше любых других текстовых хендлеров
-    conv_handler = ConversationHandler(
-        entry_points=[
-            MessageHandler(filters.TEXT & filters.Regex("Оставить заявку"), form_entry)
-        ],
-        states={
-            ASK_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_name),
-                CallbackQueryHandler(callback_handler, pattern="^cancel$")
-            ],
-            ASK_PROJECT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_project),
-                CallbackQueryHandler(callback_handler, pattern="^cancel$")
-            ],
-            ASK_BUDGET: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, ask_budget),
-                CallbackQueryHandler(callback_handler, pattern="^cancel$")
-            ],
-        },
-        fallbacks=[
-            CommandHandler("cancel", cancel),
-            CommandHandler("help", help_command)
-        ],
-        allow_reentry=True,
-        per_message=True
-    )
-    app.add_handler(conv_handler)
-
-    # Reply-кнопки главного меню
+    # Reply-кнопки
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🧠 Услуги$"), services))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📂 Примеры работ$"), portfolio))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^💰 Заказать и оплатить$"), order))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^📞 Связаться с менеджером$"), contact_manager))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^🤖 Задать вопрос GPT-сотруднику$"), ask_gpt))
 
-    # GPT — должен быть последним, чтобы не мешать анкете
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^(?!🤖 ).+"), gpt_reply))
+    # Универсальный роутер по анкете и GPT
+    app.add_handler(MessageHandler(filters.TEXT, form_router))
 
     logging.info("Бот запущен 🚀")
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
