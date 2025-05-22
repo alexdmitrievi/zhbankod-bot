@@ -270,29 +270,39 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
 
     try:
+        # Безопасная вставка в таблицу
         sheet.append_row([
-            data['name'],
-            data['project'],
-            data['budget'],
+            data.get("name", ""),
+            data.get("project", ""),
+            data.get("budget", ""),
             tg_link,
             date
         ])
     except Exception as e:
-        logging.error(f"Ошибка при записи в Google Sheets: {e}")
-        await update.message.reply_text("⚠️ Ошибка при сохранении заявки. Попробуйте позже.", reply_markup=main_menu_keyboard)
-        return ConversationHandler.END
+        logging.error(f"❌ Ошибка при записи в Google Sheets: {e}")
+        await update.message.reply_text(
+            f"⚠️ Не удалось сохранить заявку: {e}",
+            reply_markup=main_menu_keyboard
+        )
+        return
 
+    # Отправка админу и пользователю
     text = (
         f"📥 *Новая заявка!*\n\n"
-        f"👤 Имя: {data['name']}\n"
-        f"🧠 Проект: {data['project']}\n"
-        f"💸 Бюджет: {data['budget']}\n"
+        f"👤 Имя: {data.get('name', '-')}\n"
+        f"🧠 Проект: {data.get('project', '-')}\n"
+        f"💸 Бюджет: {data.get('budget', '-')}\n"
         f"🔗 Telegram: {tg_link}\n"
         f"🗓️ Дата: {date}"
     )
     await context.bot.send_message(chat_id=ADMIN_ID, text=text, parse_mode="Markdown")
-    await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.", reply_markup=main_menu_keyboard)
-    return ConversationHandler.END
+    await update.message.reply_text(
+        "✅ Спасибо! Мы свяжемся с вами в Telegram.",
+        reply_markup=main_menu_keyboard
+    )
+
+    # Очистим шаг после завершения анкеты
+    context.user_data["form_step"] = None
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Заявка отменена.", reply_markup=main_menu_keyboard)
