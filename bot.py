@@ -1,9 +1,10 @@
 import os
+import re
 import json
 import logging
 import datetime
-import gspread
 import asyncio
+import gspread
 from openai import OpenAI
 
 from telegram import (
@@ -21,10 +22,15 @@ from telegram.ext import (
     ContextTypes,
     MessageHandler,
     filters,
-    CallbackQueryHandler,
-    ConversationHandler
+    CallbackQueryHandler
 )
 from google.oauth2.service_account import Credentials
+
+def escape_md(text: str) -> str:
+    """Экранирует символы MarkdownV2"""
+    if not text:
+        return "-"
+    return re.sub(r'([_*[\]()~`>#+=|{}.!\\-])', r'\\\1', str(text))
 
 main_menu_keyboard = ReplyKeyboardMarkup([
     ["🧠 Услуги", "📂 Примеры работ"],
@@ -260,7 +266,7 @@ async def ask_project(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["budget"] = update.message.text
-    context.user_data["form_step"] = None  # сбрасываем этап анкеты
+    context.user_data["form_step"] = None
 
     user = update.message.from_user
     data = context.user_data
@@ -268,7 +274,6 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tg_link = f"@{user.username}" if user.username else f"https://t.me/user?id={user.id}"
 
     try:
-        # Запись в Google Sheets
         sheet.append_row([
             data.get("name", ""),
             data.get("project", ""),
@@ -284,16 +289,21 @@ async def ask_budget(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Подтверждение и уведомление
     summary = (
         f"📥 *Новая заявка!*\n\n"
-        f"👤 Имя: {data.get('name', '-')}\n"
-        f"🧠 Проект: {data.get('project', '-')}\n"
-        f"💸 Бюджет: {data.get('budget', '-')}\n"
-        f"🔗 Telegram: {tg_link}\n"
-        f"🗓️ Дата: {date}"
+        f"👤 Имя: {escape_md(data.get('name', '-'))}\n"
+        f"🧠 Проект: {escape_md(data.get('project', '-'))}\n"
+        f"💸 Бюджет: {escape_md(data.get('budget', '-'))}\n"
+        f"🔗 Telegram: {escape_md(tg_link)}\n"
+        f"🗓️ Дата: {escape_md(date)}"
     )
-    await context.bot.send_message(chat_id=ADMIN_ID, text=summary, parse_mode="Markdown")
+
+    await context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=summary,
+        parse_mode="MarkdownV2"
+    )
+
     await update.message.reply_text(
         "✅ Спасибо! Мы свяжемся с вами в Telegram.",
         reply_markup=main_menu_keyboard
