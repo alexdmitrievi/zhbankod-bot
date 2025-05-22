@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import logging
 import datetime
@@ -25,12 +24,6 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from google.oauth2.service_account import Credentials
-
-def escape_md(text: str) -> str:
-    """Экранирует символы MarkdownV2"""
-    if not text:
-        return "-"
-    return re.sub(r'([_*[\]()~`>#+=|{}.!\\-])', r'\\\1', str(text))
 
 main_menu_keyboard = ReplyKeyboardMarkup([
     ["🧠 Услуги", "📂 Примеры работ"],
@@ -134,8 +127,7 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["name"] = text
         context.user_data["form_step"] = "ask_project"
         await update.message.reply_text(
-            "✍️ Расскажите, *какой бот вам нужен*:",
-            parse_mode="Markdown",
+            "✍️ Расскажите, какой бот вам нужен:",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
             ])
@@ -146,8 +138,7 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["project"] = text
         context.user_data["form_step"] = "ask_budget"
         await update.message.reply_text(
-            "💸 Укажите *желаемый бюджет* проекта:",
-            parse_mode="Markdown",
+            "💸 Укажите желаемый бюджет проекта:",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
             ])
@@ -179,27 +170,28 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-        # Подготовка сообщения для админа
         summary = (
-            f"📥 *Новая заявка!*\n\n"
-            f"👤 Имя: {escape_md(data.get('name', '-'))}\n"
-            f"🧠 Проект: {escape_md(data.get('project', '-'))}\n"
-            f"💸 Бюджет: {escape_md(data.get('budget', '-'))}\n"
-            f"🔗 Telegram: {escape_md(tg_link)}\n"
-            f"🗓️ Дата: {escape_md(date)}"
-        )
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=summary,
-            parse_mode="MarkdownV2"
+            "📥 Новая заявка!\n\n"
+            f"👤 Имя: {data.get('name', '-')}\n"
+            f"🧠 Проект: {data.get('project', '-')}\n"
+            f"💸 Бюджет: {data.get('budget', '-')}\n"
+            f"🔗 Telegram: {tg_link}\n"
+            f"🗓️ Дата: {date}"
         )
 
-        # Ответ пользователю
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=summary
+        )
+
         await update.message.reply_text(
             "✅ Спасибо! Мы свяжемся с вами в Telegram.",
             reply_markup=main_menu_keyboard
         )
         return
+
+    # Всё остальное — к GPT
+    return await gpt_reply(update, context)
 
     # Если не анкета — GPT
     return await gpt_reply(update, context)
