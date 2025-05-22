@@ -119,9 +119,16 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     step = context.user_data.get("form_step")
 
-    # 📍 Если пользователь только нажал кнопку "Оставить заявку"
+    # 📍 Первый запуск анкеты
     if "Оставить заявку" in text and not step:
-        return await form_entry(update, context)
+        context.user_data["form_step"] = "ask_name"
+        await update.message.reply_text(
+            "✍️ Введите ваше имя:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🏠 Вернуться в меню", callback_data="cancel")]
+            ])
+        )
+        return
 
     if step == "ask_name":
         context.user_data["name"] = update.message.text
@@ -181,7 +188,7 @@ async def form_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✅ Спасибо! Мы свяжемся с вами в Telegram.", reply_markup=main_menu_keyboard)
         return
 
-    # Если ни одно условие не сработало — отправим в GPT
+    # 💬 Если пользователь вне анкеты — передаём GPT-сотруднику
     return await gpt_reply(update, context)
 
 async def order(update: Update, context: ContextTypes.DEFAULT_TYPE):
