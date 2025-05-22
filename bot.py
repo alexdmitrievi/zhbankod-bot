@@ -306,7 +306,7 @@ def main():
     # Анкета — должен быть добавлен раньше любых других текстовых хендлеров
     conv_handler = ConversationHandler(
         entry_points=[
-            MessageHandler(filters.TEXT & filters.Regex("^📬 Оставить заявку$"), form_entry)
+            MessageHandler(filters.TEXT & filters.Regex("Оставить заявку"), form_entry)
         ],
         states={
             ASK_NAME: [
